@@ -6,7 +6,7 @@ from api.db.models import IngredientModel
 from api.db.schemas import IngredientSchema
 from api.db.models import UserModel
 from api.db.schemas import UserSchema
-from api.routes.routes import Routes, app
+from api.routes.routes import app
 from signal import *
 from eventlet import spawn
 import atexit

@@ -3,18 +3,17 @@
 from marshmallow import fields
 
 # User model imports
-from app import FlaskApp
 from api.db.models import (
     IngredientModel,
     MenuItemModel,
     MenuItemCategoryModel,
     OrderItemModel,
     OrderModel,
-    UserModel
+    UserModel,
+    app
 )
 
-# Initialzie the flask app
-app = FlaskApp()
+
 
 
 class IngredientSchema(app.ma.SQLAlchemyAutoSchema):
