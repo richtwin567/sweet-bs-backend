@@ -48,9 +48,15 @@ class UserSchema(app.ma.SQLAlchemyAutoSchema):
         model = UserModel
         exclude = ("_password",)
 
+    class UserOrderSchema(app.ma.SQLAlchemyAutoSchema):
+        class Meta:
+            model = OrderModel
+            
+        items = app.ma.Nested(OrderItemSchema, default=[], many=True)
+
     password = fields.String(attribute='_password')
     orders_placed = fields.Integer(attribute='orders_placed')
-
+    orders = app.ma.Nested(UserOrderSchema, default=[], many=True)
 
 class OrderSchema(app.ma.SQLAlchemyAutoSchema):
     class Meta:

@@ -341,6 +341,39 @@ class Routes():
         return (jsonify({'res': res}))
 
     @staticmethod
+    @app.route('/user/info',methods=['GET'])
+    @token_required
+    def get_user(user):
+        """
+        Gets a user's profile information for the my account page
+
+        Args:
+            user(User):
+                The user whose account info should be sent
+        """
+        user_schema = UserSchema()
+        response = user_schema.dump(user)
+        return jsonify(response)
+
+    @staticmethod
+    @app.route('/user/update', methods=["POST"])
+    @token_required
+    def update_user(user):
+        """
+        Updates a users information
+
+        Args:
+            user(User):
+                The user to be updated
+        """
+        
+        req = request.get_json(force=True)
+        for k,v in req.items():
+            app.db.session.execute(f"UPDATE users SET {k}='{v}' WHERE id={user.id};")
+            app.db.session.commit()
+        return jsonify({"message":"updated"})
+
+    @staticmethod
     @app.errorhandler(HTTPException)
     def http_errors_to_json(error: HTTPException):
         """

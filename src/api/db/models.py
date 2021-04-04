@@ -82,7 +82,7 @@ class UserModel(app.db.Model):
     )
 
     # Relationships with other tables
-    _orders_placed = app.db.relationship(
+    orders = app.db.relationship(
         "OrderModel", cascade="all, delete, delete-orphan", backref="user")
 
     # Class methods
@@ -122,7 +122,8 @@ class UserModel(app.db.Model):
     @hybrid_property
     def orders_placed(self):
         """Retrieve the amount of orders placed."""
-        return len(self._orders_placed)
+        return len(self.orders)
+
 
 
 class IngredientModel(app.db.Model):
