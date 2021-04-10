@@ -86,7 +86,7 @@ class ServerSockets():
         return channel
 
     @staticmethod
-    def get_menuitems_by_category():
+    def get_menuitems_by_category(newConnection=False):
         """
         Fetches all menuitems, grouped by category, from the database
         and sends them to all clients connected to the menu namespace
@@ -106,7 +106,7 @@ class ServerSockets():
         else:
             response = category_schema.dump(menuitems)
             app.socketio.emit(
-                'changed:menuitems', response, namespace='/menu/watch')
+                f'{"initial" if newConnection else "changed"}:menuitems', response, namespace='/menu/watch')
 
     @staticmethod
     def listen_for_menu():
@@ -147,7 +147,7 @@ class ServerSockets():
             None
         """
 
-        ServerSockets.get_menuitems_by_category()
+        ServerSockets.get_menuitems_by_category(True)
 
     @staticmethod
     def get_users():
