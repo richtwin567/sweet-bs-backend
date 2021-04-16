@@ -153,16 +153,32 @@ class Routes():
 
         # TODO - Validate user data @Deniz
         username = req.get('username')
+        email = req.get('email')
 
         # Check if the user already exists
-        user = UserModel.query.filter_by(username=username).first()
+        user_check = UserModel.query.filter_by(username=username).first()
+
+        # Check if a user with email address already exists
+        email_check = UserModel.query.filter_by(email=email).first()
 
         # Create and insert new user
-        if user is None:
+        if user_check is not None:
+            return make_response(
+                {
+                    'message': 'Username {} already exists'.format(username)
+                }, 401)
+
+        elif email_check is not None:
+            return make_response(
+                {
+                    'message': 'Email address {} is already in use'.format(email)
+                }, 401)
+
+        else:
             user = UserModel(
                 username=username,
-                firstname=req.get('firstName'),
-                lastname=req.get('lastName'),
+                firstname=req.get('firstname'),
+                lastname=req.get('lastname'),
                 password=req.get('password'),
                 email=req.get('email') or "",
                 address=req.get('address') or ""
@@ -171,7 +187,6 @@ class Routes():
             app.db.session.add(user)
             app.db.session.commit()
             return make_response('Successfully registered.', 201)
-        return make_response('User already exists. Please Log in', 401)
 
     @ staticmethod
     @app.route("/isauthorized", methods=["POST"])
@@ -204,8 +219,8 @@ class Routes():
             response = user_schema.dump(users)
             return (jsonify(response))
 
-    @staticmethod
-    @app.route("/users/remove", methods=['POST'])
+    @ staticmethod
+    @ app.route("/users/remove", methods=['POST'])
     def remove_user():
         req = request.get_json(force=True)
         try:
@@ -241,9 +256,9 @@ class Routes():
             response = order_schema.dump(orders)
             return jsonify(response)
 
-    @staticmethod
-    @app.route("/orders/add", methods=['POST'])
-    @token_required
+    @ staticmethod
+    @ app.route("/orders/add", methods=['POST'])
+    @ token_required
     def add_new_order(customer: UserModel):
         """
         Adds a new order to the database
@@ -302,7 +317,7 @@ class Routes():
         else:
             response = menuitem_schema.dump(menuitems)
             return jsonify(response)
-    
+
     @staticmethod
     @app.route("/categories")
     def get_categories():
@@ -323,7 +338,8 @@ class Routes():
         req = request.get_json(force=True)
         try:
             category = req.get('category')
-            app.db.session.execute(text("INSERT INTO menuitem_categories (name) values(:category)"), {"category": category})
+            app.db.session.execute(text(
+                "INSERT INTO menuitem_categories (name) values(:category)"), {"category": category})
             app.db.session.commit()
             res = 'Category successfully added.'
         except:
@@ -335,13 +351,13 @@ class Routes():
     def get_user_orders(uid):
         user_id = int(uid)
         order_schema = OrderSchema(many=True)
-        orders = OrderModel.query.filter_by(user_id = user_id)
+        orders = OrderModel.query.filter_by(user_id=user_id)
 
         if orders is not None:
             res = order_schema.dump(orders)
             return jsonify(res)
         else:
-            res = {"message" : "No orders found for user."}
+            res = {"message": "No orders found for user."}
             return jsonify(res)
 
     @staticmethod
@@ -355,11 +371,14 @@ class Routes():
             description = req.get('description')
             img_url = req.get('imgURL')
             ids = req.get('ids')
-            app.db.session.execute(text("INSERT INTO menuitems (flavour,category_id,price,description,image_url) values(:flavour, :categoryID, :price, :description, :imgURL)"), {"flavour": flavour, "categoryID": category_id, "price": price, "description":description, "imgURL": img_url})
+            app.db.session.execute(text("INSERT INTO menuitems (flavour,category_id,price,description,image_url) values(:flavour, :categoryID, :price, :description, :imgURL)"), {
+                                   "flavour": flavour, "categoryID": category_id, "price": price, "description": description, "imgURL": img_url})
             app.db.session.commit()
-            res = app.db.session.query(MenuItemModel).order_by(MenuItemModel.id.desc()).first().id
+            res = app.db.session.query(MenuItemModel).order_by(
+                MenuItemModel.id.desc()).first().id
             for id in ids:
-                app.db.session.execute(text("INSERT into menuitems_ingredients (menuitem_id,ingredient_id) values(:menu_id, :ing_id)"), {"menu_id": res, "ing_id": id})
+                app.db.session.execute(text("INSERT into menuitems_ingredients (menuitem_id,ingredient_id) values(:menu_id, :ing_id)"), {
+                                       "menu_id": res, "ing_id": id})
                 app.db.session.commit()
             return (jsonify({'message': 'success'}))
         except:
@@ -385,21 +404,23 @@ class Routes():
             return jsonify({"message": "success"})
         except:
             return jsonify({"message": "Could not update menuitem"})
-    
+
     @staticmethod
     @app.route("/remove-item", methods=['POST'])
     def remove_menuitem():
         req = request.get_json(force=True)
         try:
             menu_id = int(req.get('id'))
-            app.db.session.execute(text("DELETE FROM orderitems where menuitem_id= :mid"), {"mid": menu_id})
-            app.db.session.execute(text("DELETE FROM menuitems_ingredients where menuitem_id= :mid"), {"mid": menu_id})
-            app.db.session.execute(text("DELETE FROM menuitems where id= :mid"), {"mid": menu_id})
+            app.db.session.execute(
+                text("DELETE FROM orderitems where menuitem_id= :mid"), {"mid": menu_id})
+            app.db.session.execute(text(
+                "DELETE FROM menuitems_ingredients where menuitem_id= :mid"), {"mid": menu_id})
+            app.db.session.execute(
+                text("DELETE FROM menuitems where id= :mid"), {"mid": menu_id})
             app.db.session.commit()
             return jsonify({"message": "Success"})
         except:
             return jsonify({"message": "Could not remove item"})
-
 
     @ staticmethod
     @ app.route("/ingredients", methods=['GET'])
@@ -428,20 +449,22 @@ class Routes():
     @app.route("/weeks-ingredients", methods=['GET'])
     def get_ingredients_for_week():
         week_num = datetime.now().isocalendar()[1]
-        WEEK  = week_num - 1 # as it starts with 0 and you want week to start from sunday
-        startdate = time.asctime(time.strptime('%s %d 0' % (datetime.now().year, WEEK), '%Y %W %w')) 
-        startdate = datetime.strptime(startdate, '%a %b %d %H:%M:%S %Y') 
-        dates = [startdate.strftime('%Y-%m-%d')] 
-        
-        for i in range(1, 7): 
+        WEEK = week_num - 1  # as it starts with 0 and you want week to start from sunday
+        startdate = time.asctime(time.strptime(
+            '%s %d 0' % (datetime.now().year, WEEK), '%Y %W %w'))
+        startdate = datetime.strptime(startdate, '%a %b %d %H:%M:%S %Y')
+        dates = [startdate.strftime('%Y-%m-%d')]
+
+        for i in range(1, 7):
             day = startdate + timedelta(days=i)
             dates.append(day.strftime('%Y-%m-%d'))
-        
+
         ingredients = []
-        rows = app.db.session.execute(text("SELECT i.name FROM orders o JOIN orderitems oi ON o.id = oi.order_id JOIN menuitems m ON m.id = oi.menuitem_id JOIN menuitems_ingredients mi ON m.id = mi.menuitem_id JOIN ingredients i ON i.id = mi.ingredient_id WHERE o.created_on >= :bdate AND o.created_on <= :edate GROUP BY i.name"), {"bdate": dates[0], "edate":dates[-1]}).fetchall()
+        rows = app.db.session.execute(text("SELECT i.name FROM orders o JOIN orderitems oi ON o.id = oi.order_id JOIN menuitems m ON m.id = oi.menuitem_id JOIN menuitems_ingredients mi ON m.id = mi.menuitem_id JOIN ingredients i ON i.id = mi.ingredient_id WHERE o.created_on >= :bdate AND o.created_on <= :edate GROUP BY i.name"), {
+                                      "bdate": dates[0], "edate": dates[-1]}).fetchall()
         for row in rows:
             ingredients.append(list(row)[0])
-        
+
         return jsonify(ingredients)
 
     @staticmethod
@@ -452,8 +475,8 @@ class Routes():
 
         for item in new_items:
             iitem = IngredientModel(
-                name = item,
-                in_stock = False,
+                name=item,
+                in_stock=False,
             )
             app.db.session.add(iitem)
         app.db.session.commit()
