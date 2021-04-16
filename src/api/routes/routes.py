@@ -161,11 +161,11 @@ class Routes():
         if user is None:
             user = UserModel(
                 username=username,
-                first_name=req.get('firstname'),
-                last_name=req.get('lastname'),
+                firstname=req.get('firstName'),
+                lastname=req.get('lastName'),
                 password=req.get('password'),
-                email=req.get('email'),
-                address=req.get('address')
+                email=req.get('email') or "",
+                address=req.get('address') or ""
             )
 
             app.db.session.add(user)
@@ -173,6 +173,15 @@ class Routes():
             return make_response('Successfully registered.', 201)
         return make_response('User already exists. Please Log in', 401)
 
+    @ staticmethod
+    @app.route("/isauthorized", methods=["POST"])
+    @token_required
+    def is_authorized(user:UserModel):
+        if user.is_admin:
+            return jsonify({"message": "authorized"}),200
+        else:
+            return jsonify({"message": "not authorized"}),401
+    
     @ staticmethod
     @ app.route("/users", methods=['GET'])
     def get_all_users():
